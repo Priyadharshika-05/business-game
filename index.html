@@ -1,49 +1,1065 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Business India - Calculation Logic</title>
-  <link rel="stylesheet" href="style.css" />
-  <script src="game.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Business India</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0e0a1a;
+    --surface: #1a1330;
+    --surface2: #231b42;
+    --border: #3a2d6a;
+    --accent: #7c3aed;
+    --accent2: #a855f7;
+    --accent-glow: rgba(124,58,237,0.3);
+    --p1: #06b6d4;
+    --p1-soft: rgba(6,182,212,0.15);
+    --p2: #f59e0b;
+    --p2-soft: rgba(245,158,11,0.15);
+    --bank: #10b981;
+    --bank-soft: rgba(16,185,129,0.15);
+    --text: #e2d9f3;
+    --muted: #7c6fa0;
+    --danger: #ef4444;
+    --radius: 10px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--accent2), #c084fc);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    flex-shrink: 0;
+  }
+
+  /* DICE */
+  .dice-area {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .die {
+    width: 44px; height: 44px;
+    background: var(--surface2);
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.6rem;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    user-select: none;
+  }
+  .die:hover { box-shadow: 0 0 12px var(--accent-glow); }
+  .die.rolling { animation: rollAnim 0.5s ease; }
+  @keyframes rollAnim {
+    0%,100%{transform:rotate(0deg)} 25%{transform:rotate(-20deg)} 75%{transform:rotate(20deg)}
+  }
+
+  .roll-btn {
+    padding: 8px 18px;
+    background: var(--accent);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    letter-spacing: 0.5px;
+  }
+  .roll-btn:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  .dice-sum {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.4rem;
+    color: var(--accent2);
+    min-width: 28px;
+    text-align: center;
+  }
+
+  /* SEARCH */
+  .search-wrap {
+    flex: 1;
+    min-width: 180px;
+    max-width: 320px;
+    position: relative;
+  }
+
+  .search-wrap input {
+    width: 100%;
+    padding: 9px 14px 9px 36px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--muted); }
+  .search-icon {
+    position: absolute;
+    left: 10px; top: 50%;
+    transform: translateY(-50%);
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+
+  #search-results {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 200;
+    display: none;
+  }
+  #search-results.open { display: block; }
+  .sr-item {
+    padding: 9px 14px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .sr-item:last-child { border-bottom: none; }
+  .sr-item:hover { background: var(--border); }
+  .sr-item span { color: var(--muted); font-size: 0.75rem; margin-left: 6px; }
+
+  /* ── BANK STRIP ── */
+  .bank-strip {
+    background: var(--bank-soft);
+    border-bottom: 1px solid rgba(16,185,129,0.25);
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    flex-wrap: wrap;
+  }
+
+  .bank-label {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    color: var(--bank);
+    letter-spacing: 1px;
+    flex-shrink: 0;
+  }
+
+  .bank-balance {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    color: var(--bank);
+    flex-shrink: 0;
+  }
+
+  .txn-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+
+  .txn-label { font-size: 0.78rem; color: var(--muted); }
+
+  select.txn-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 5px 8px;
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .txn-input {
+    width: 110px;
+    padding: 5px 9px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .txn-input:focus { border-color: var(--accent); }
+
+  .txn-btn {
+    padding: 5px 14px;
+    background: var(--accent);
+    border: none;
+    border-radius: 6px;
+    color: #fff;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  .txn-btn:hover { background: var(--accent2); }
+  .txn-btn.green { background: var(--bank); }
+  .txn-btn.green:hover { background: #059669; }
+
+  /* ── MAIN SPLIT ── */
+  .main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: calc(100vh - 140px);
+  }
+
+  .player-col {
+    padding: 18px 16px;
+    border-right: 1px solid var(--border);
+  }
+  .player-col.p2 { border-right: none; border-left: 1px solid var(--border); }
+
+  /* PLAYER HEADER */
+  .player-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+
+  /* Player name input */
+  .player-name-input {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.3rem;
+    letter-spacing: 1.5px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    outline: none;
+    cursor: text;
+    transition: border-color 0.2s;
+    min-width: 80px;
+    max-width: 160px;
+    padding: 2px 4px;
+  }
+  .player-name-input:focus { border-bottom-color: var(--accent); }
+  .p1 .player-name-input { color: var(--p1); }
+  .p2 .player-name-input { color: var(--p2); }
+
+  .player-cash {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+  }
+  .p1 .player-cash { color: var(--p1); }
+  .p2 .player-cash { color: var(--p2); }
+
+  /* PLAYER TRANSACTION */
+  .player-txn {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 18px;
+    padding: 14px;
+    background: var(--surface);
+    border-radius: var(--radius);
+    border: 1px solid var(--border);
+  }
+
+  .ptxn-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .ptxn-label { font-size: 0.78rem; color: var(--muted); width: 70px; flex-shrink: 0; }
+
+  /* CITY CARDS */
+  .cities-owned {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .cities-owned-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  /* ── CITY CARD ── */
+  .city-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .city-card:hover { border-color: var(--accent); }
+
+  .city-card.owned-p1 { border-color: rgba(6,182,212,0.5); }
+  .city-card.owned-p2 { border-color: rgba(245,158,11,0.5); }
+
+  .city-top {
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .city-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  .city-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1rem;
+    color: var(--accent2);
+  }
+
+  .city-toggle {
+    color: var(--muted);
+    font-size: 0.75rem;
+    transition: transform 0.2s;
+    flex-shrink: 0;
+  }
+  .city-card.open .city-toggle { transform: rotate(180deg); }
+
+  .city-body {
+    display: none;
+    padding: 0 12px 12px;
+    flex-direction: column;
+    gap: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .city-card.open .city-body { display: flex; }
+
+  /* OWNERSHIP ROW */
+  .owner-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    flex-wrap: wrap;
+  }
+  .owner-row label { font-size: 0.78rem; color: var(--muted); }
+  .owner-select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 4px 8px;
+    font-size: 0.82rem;
+    outline: none;
+    cursor: pointer;
+    flex: 1;
+    min-width: 100px;
+  }
+
+  /* BUILDINGS ROW */
+  .build-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .build-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .build-group label { font-size: 0.78rem; color: var(--muted); }
+  .build-input {
+    width: 52px;
+    padding: 4px 6px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.85rem;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .build-input:focus { border-color: var(--accent); }
+
+  /* RENT TABLE */
+  .rent-table { width: 100%; border-collapse: collapse; font-size: 0.78rem; }
+  .rent-table th {
+    background: var(--surface2);
+    color: var(--muted);
+    padding: 4px 8px;
+    text-align: left;
+    font-weight: 500;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+  }
+  .rent-table td {
+    padding: 4px 8px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+  }
+  .rent-table td:last-child { text-align: right; color: var(--accent2); font-weight: 600; }
+
+  /* BADGE */
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+  .badge-p1 { background: var(--p1-soft); color: var(--p1); }
+  .badge-p2 { background: var(--p2-soft); color: var(--p2); }
+  .badge-unowned { background: rgba(124,111,160,0.2); color: var(--muted); }
+  .badge-special { background: rgba(239,68,68,0.15); color: #f87171; }
+
+  /* CITY TYPE TAGS */
+  .city-tag {
+    font-size: 0.7rem;
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  /* FLASH */
+  .flash {
+    position: fixed;
+    top: 12px; right: 16px;
+    background: var(--surface2);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 18px;
+    font-size: 0.85rem;
+    z-index: 1000;
+    animation: fadeInOut 2.2s ease forwards;
+    pointer-events: none;
+  }
+  @keyframes fadeInOut {
+    0%{opacity:0;transform:translateY(-8px)}
+    15%{opacity:1;transform:translateY(0)}
+    75%{opacity:1}
+    100%{opacity:0;transform:translateY(-4px)}
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* RESPONSIVE */
+  @media(max-width: 640px) {
+    .main { grid-template-columns: 1fr; }
+    .player-col.p2 { border-left: none; border-top: 1px solid var(--border); }
+    .topbar { gap: 10px; }
+  }
+
+  .section-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 0;
+  }
+</style>
 </head>
 <body>
-  <div class="container">
-    <!-- Banking Input Section -->
-    <div class="banking-section">
-      <h2>Bank Actions</h2>
-      <div>
-        <label>+ Amount:</label>
-        <input type="number" id="bank-add-amount" placeholder="Enter + amount">
-        <button onclick="updateBank('+', document.getElementById('bank-add-amount').value)">Update Bank</button>
-      </div>
-      <div>
-        <label>- Amount:</label>
-        <input type="number" id="bank-subtract-amount" placeholder="Enter - amount">
-        <button onclick="updateBank('-', document.getElementById('bank-subtract-amount').value)">Update Bank</button>
-      </div>
-      <div>Current Bank Balance: <span id="bank-display">₹0</span></div>
-    </div>
 
-    <!-- Player Accounts Section -->
-    <div class="players-section">
-      <h2>Player Accounts</h2>
-      <div class="player-section" id="player1-section">
-        <p>Player 1 Cash: <span id="player1-cash">₹0</span></p>
-      </div>
-      <div class="player-section" id="player2-section">
-        <p>Player 2 Cash: <span id="player2-cash">₹0</span></span></p>
-      </div>
-    </div>
+<!-- ══ TOP BAR ══ -->
+<div class="topbar">
+  <div class="logo">Business India</div>
 
-    <!-- City Search Box -->
-    <h2>City Search</h2>
-    <input type="text" id="city-search" placeholder="Search cities...">
-
-    <!-- City List -->
-    <div class="city-list" id="city-list">
-      <!-- Dynamic city cards will be injected here -->
-    </div>
+  <!-- DICE -->
+  <div class="dice-area">
+    <div class="die" id="die1">🎲</div>
+    <div class="die" id="die2">🎲</div>
+    <button class="roll-btn" onclick="rollDice()">Roll</button>
+    <div class="dice-sum" id="dice-sum"></div>
   </div>
+
+  <!-- SEARCH -->
+  <div class="search-wrap">
+    <span class="search-icon">🔍</span>
+    <input type="text" id="city-search" placeholder="Search cities…" autocomplete="off" oninput="onSearch()" onfocus="onSearch()" onblur="hideSearch()"/>
+    <div id="search-results"></div>
+  </div>
+</div>
+
+<!-- ══ BANK STRIP ══ -->
+<div class="bank-strip">
+  <div class="bank-label">🏦 Bank</div>
+  <div class="bank-balance" id="bank-display">₹33,300</div>
+
+  <!-- From Bank (player receives) -->
+  <div class="txn-group">
+    <span class="txn-label">From Bank →</span>
+    <select class="txn-select" id="bank-from-player">
+      <option value="1">Player 1</option>
+      <option value="2">Player 2</option>
+    </select>
+    <input class="txn-input" type="number" id="bank-from-amt" placeholder="Amount" min="0"/>
+    <button class="txn-btn green" onclick="txnBankToPlayer()">Give ₹</button>
+  </div>
+
+  <!-- To Bank (player pays) -->
+  <div class="txn-group">
+    <span class="txn-label">To Bank ←</span>
+    <select class="txn-select" id="bank-to-player">
+      <option value="1">Player 1</option>
+      <option value="2">Player 2</option>
+    </select>
+    <input class="txn-input" type="number" id="bank-to-amt" placeholder="Amount" min="0"/>
+    <button class="txn-btn" onclick="txnPlayerToBank()">Pay ₹</button>
+  </div>
+</div>
+
+<!-- ══ MAIN SPLIT ══ -->
+<div class="main">
+
+  <!-- ─ PLAYER 1 ─ -->
+  <div class="player-col p1" id="col-p1">
+    <div class="player-header">
+      <input class="player-name-input" id="p1-name" type="text" value="Player 1"
+        placeholder="Player 1 name"
+        oninput="updatePlayerName('p1')" />
+      <div class="player-cash" id="p1-cash">₹83,250</div>
+    </div>
+
+    <!-- P1 Transactions -->
+    <div class="player-txn">
+      <div class="ptxn-row">
+        <span class="ptxn-label">From Bank</span>
+        <input class="txn-input" type="number" id="p1-bank-recv" placeholder="Amount" min="0"/>
+        <button class="txn-btn green" onclick="txnDirect('p1','bank','recv')">+₹</button>
+      </div>
+      <div class="ptxn-row">
+        <span class="ptxn-label">To Bank</span>
+        <input class="txn-input" type="number" id="p1-bank-pay" placeholder="Amount" min="0"/>
+        <button class="txn-btn" onclick="txnDirect('p1','bank','pay')">-₹</button>
+      </div>
+      <div class="ptxn-row">
+        <span class="ptxn-label" id="p1-from-opp-label">From P2</span>
+        <input class="txn-input" type="number" id="p1-opp-recv" placeholder="Amount" min="0"/>
+        <button class="txn-btn green" onclick="txnDirect('p1','opponent','recv')">+₹</button>
+      </div>
+      <div class="ptxn-row">
+        <span class="ptxn-label" id="p1-to-opp-label">To P2</span>
+        <input class="txn-input" type="number" id="p1-opp-pay" placeholder="Amount" min="0"/>
+        <button class="txn-btn" onclick="txnDirect('p1','opponent','pay')">-₹</button>
+      </div>
+    </div>
+
+    <div class="cities-owned-title">Owned Cities</div>
+    <div class="cities-owned" id="p1-cities"></div>
+  </div>
+
+  <!-- ─ PLAYER 2 ─ -->
+  <div class="player-col p2" id="col-p2">
+    <div class="player-header">
+      <input class="player-name-input" id="p2-name" type="text" value="Player 2"
+        placeholder="Player 2 name"
+        oninput="updatePlayerName('p2')" />
+      <div class="player-cash" id="p2-cash">₹83,250</div>
+    </div>
+
+    <!-- P2 Transactions -->
+    <div class="player-txn">
+      <div class="ptxn-row">
+        <span class="ptxn-label">From Bank</span>
+        <input class="txn-input" type="number" id="p2-bank-recv" placeholder="Amount" min="0"/>
+        <button class="txn-btn green" onclick="txnDirect('p2','bank','recv')">+₹</button>
+      </div>
+      <div class="ptxn-row">
+        <span class="ptxn-label">To Bank</span>
+        <input class="txn-input" type="number" id="p2-bank-pay" placeholder="Amount" min="0"/>
+        <button class="txn-btn" onclick="txnDirect('p2','bank','pay')">-₹</button>
+      </div>
+      <div class="ptxn-row">
+        <span class="ptxn-label" id="p2-from-opp-label">From P1</span>
+        <input class="txn-input" type="number" id="p2-opp-recv" placeholder="Amount" min="0"/>
+        <button class="txn-btn green" onclick="txnDirect('p2','opponent','recv')">+₹</button>
+      </div>
+      <div class="ptxn-row">
+        <span class="ptxn-label" id="p2-to-opp-label">To P1</span>
+        <input class="txn-input" type="number" id="p2-opp-pay" placeholder="Amount" min="0"/>
+        <button class="txn-btn" onclick="txnDirect('p2','opponent','pay')">-₹</button>
+      </div>
+    </div>
+
+    <div class="cities-owned-title">Owned Cities</div>
+    <div class="cities-owned" id="p2-cities"></div>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   HELPERS: percentage calculations
+═══════════════════════════════════════════ */
+function pct(price, percent) {
+  return Math.round(price * percent / 100);
+}
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+const state = {
+  bank: 33300,
+  p1: 83250,
+  p2: 83250
+};
+
+const playerNames = { p1: 'Player 1', p2: 'Player 2' };
+
+/* ═══════════════════════════════════════════
+   CITY DATA
+   Types:
+     'city'    = full city (rent visit + house + hotel)
+     'special' = no house/hotel (only rent for visiting + mortgage city)
+     'chance/tax' = no card
+   Rates computed from price percentages:
+     rentVisit    = 10%
+     rent1h       = 25%
+     rent1hotel   = 75%
+     houseCost    = 50%
+     hotelCost    = 95%
+     mortgageHouse= 45%
+     mortgageHotel= 90%
+     mortgageCity = 85%
+═══════════════════════════════════════════ */
+function makeCity(id, name, price) {
+  return {
+    id, name, price, type: 'city',
+    rentVisit:     pct(price, 10),
+    rent1h:        pct(price, 25),
+    rent1hotel:    pct(price, 75),
+    houseCost:     pct(price, 50),
+    hotelCost:     pct(price, 95),
+    mortgageHouse: pct(price, 45),
+    mortgageHotel: pct(price, 90),
+    mortgageCity:  pct(price, 85),
+  };
+}
+
+function makeSpecial(id, name, price) {
+  return {
+    id, name, price, type: 'special',
+    rentVisit:   pct(price, 10),
+    mortgageCity: pct(price, 85),
+  };
+}
+
+const CITIES = [
+  makeCity('mumbai',     'Mumbai',           8500),
+  makeSpecial('waterworks', 'Water Works',   3200),
+  makeSpecial('railway',    'Railway',       9500),
+  makeCity('ahmedabad',  'Ahmedabad',        4000),
+  makeCity('indore',     'Indore',           5000),
+  makeCity('jaipur',     'Jaipur',           3000),
+  makeCity('delhi',      'Delhi',            6000),
+  makeCity('chandigarh', 'Chandigarh',       2500),
+  makeSpecial('electric',   'Electric Company', 2500),
+  makeSpecial('best',       'BEST',          3500),
+  makeCity('simla',      'Simla',            2200),
+  makeCity('amritsar',   'Amritsar',         3300),
+  makeCity('srinagar',   'Srinagar',         5000),
+  makeCity('agra',       'Agra',             2500),
+  makeCity('kanpur',     'Kanpur',           4000),
+  makeCity('patna',      'Patna',            2000),
+  makeCity('darjeeling', 'Darjeeling',       2500),
+  makeSpecial('airindia',   'Air India',     10500),
+  makeCity('kolkata',    'Kolkata',          6500),
+  makeCity('hyderabad',  'Hyderabad',        3500),
+  makeCity('chennai',    'Chennai',          7000),
+  makeCity('bangalore',  'Bangalore',        4000),
+  makeCity('ootacamund', 'Ootacamund',       2500),
+  makeCity('cochin',     'Cochin',           3000),
+  makeSpecial('motorboat',  'Motor Boat',    5500),
+  makeCity('margo',      'Margo',            4000),
+];
+
+// ownership & buildings: keyed by city id
+const cityState = {};
+CITIES.forEach(c => {
+  cityState[c.id] = { owner: 'unowned', houses: 0, hotel: 0 };
+});
+
+/* ═══════════════════════════════════════════
+   FORMAT
+═══════════════════════════════════════════ */
+function fmt(n) {
+  return '₹' + Math.abs(n).toLocaleString('en-IN');
+}
+
+/* ═══════════════════════════════════════════
+   PLAYER NAMES
+═══════════════════════════════════════════ */
+function updatePlayerName(who) {
+  const input = document.getElementById(who + '-name');
+  const val = input.value.trim() || (who === 'p1' ? 'Player 1' : 'Player 2');
+  playerNames[who] = val;
+
+  const other = who === 'p1' ? 'p2' : 'p1';
+
+  // Update "From P2" / "To P2" labels in both columns
+  const shortName = val.length > 8 ? val.slice(0, 8) + '…' : val;
+  const otherName = playerNames[other];
+  const otherShort = otherName.length > 8 ? otherName.slice(0, 8) + '…' : otherName;
+
+  // p1's labels reference p2, p2's labels reference p1
+  document.getElementById('p1-from-opp-label').textContent = 'From ' + (who === 'p2' ? shortName : otherShort);
+  document.getElementById('p1-to-opp-label').textContent   = 'To '   + (who === 'p2' ? shortName : otherShort);
+  document.getElementById('p2-from-opp-label').textContent = 'From ' + (who === 'p1' ? shortName : otherShort);
+  document.getElementById('p2-to-opp-label').textContent   = 'To '   + (who === 'p1' ? shortName : otherShort);
+
+  // Update bank strip selects
+  Array.from(document.querySelectorAll('#bank-from-player option, #bank-to-player option')).forEach(opt => {
+    if (opt.value === '1') opt.textContent = playerNames.p1;
+    if (opt.value === '2') opt.textContent = playerNames.p2;
+  });
+
+  renderAllCards();
+}
+
+/* ═══════════════════════════════════════════
+   DISPLAY UPDATE
+═══════════════════════════════════════════ */
+function updateDisplay() {
+  document.getElementById('bank-display').textContent = fmt(state.bank);
+  document.getElementById('p1-cash').textContent = fmt(state.p1);
+  document.getElementById('p2-cash').textContent = fmt(state.p2);
+  renderPlayerCities('p1');
+  renderPlayerCities('p2');
+}
+
+/* ═══════════════════════════════════════════
+   FLASH MESSAGE
+═══════════════════════════════════════════ */
+function flash(msg) {
+  const el = document.createElement('div');
+  el.className = 'flash';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 2300);
+}
+
+/* ═══════════════════════════════════════════
+   BANK ↔ PLAYER (strip buttons)
+═══════════════════════════════════════════ */
+function txnBankToPlayer() {
+  const player = document.getElementById('bank-from-player').value;
+  const amt = parseInt(document.getElementById('bank-from-amt').value) || 0;
+  if (!amt) return flash('Enter an amount');
+  state.bank -= amt;
+  if (player === '1') state.p1 += amt; else state.p2 += amt;
+  document.getElementById('bank-from-amt').value = '';
+  const pname = player === '1' ? playerNames.p1 : playerNames.p2;
+  flash(`Bank → ${pname}: ${fmt(amt)}`);
+  updateDisplay();
+}
+
+function txnPlayerToBank() {
+  const player = document.getElementById('bank-to-player').value;
+  const amt = parseInt(document.getElementById('bank-to-amt').value) || 0;
+  if (!amt) return flash('Enter an amount');
+  state.bank += amt;
+  if (player === '1') state.p1 -= amt; else state.p2 -= amt;
+  document.getElementById('bank-to-amt').value = '';
+  const pname = player === '1' ? playerNames.p1 : playerNames.p2;
+  flash(`${pname} → Bank: ${fmt(amt)}`);
+  updateDisplay();
+}
+
+/* ═══════════════════════════════════════════
+   PLAYER DIRECT TRANSACTIONS (inline)
+═══════════════════════════════════════════ */
+function txnDirect(who, counterparty, direction) {
+  const inputId = `${who}-${counterparty === 'bank' ? 'bank' : 'opp'}-${direction}`;
+  const amt = parseInt(document.getElementById(inputId).value) || 0;
+  if (!amt) return flash('Enter an amount');
+
+  const other = who === 'p1' ? 'p2' : 'p1';
+  const whoLabel = playerNames[who];
+  const otherLabel = playerNames[other];
+
+  if (counterparty === 'bank') {
+    if (direction === 'recv') {
+      state[who] += amt; state.bank -= amt;
+      flash(`${whoLabel} received ${fmt(amt)} from Bank`);
+    } else {
+      state[who] -= amt; state.bank += amt;
+      flash(`${whoLabel} paid ${fmt(amt)} to Bank`);
+    }
+  } else {
+    if (direction === 'recv') {
+      state[who] += amt; state[other] -= amt;
+      flash(`${whoLabel} received ${fmt(amt)} from ${otherLabel}`);
+    } else {
+      state[who] -= amt; state[other] += amt;
+      flash(`${whoLabel} paid ${fmt(amt)} to ${otherLabel}`);
+    }
+  }
+
+  document.getElementById(inputId).value = '';
+  updateDisplay();
+}
+
+/* ═══════════════════════════════════════════
+   DICE
+═══════════════════════════════════════════ */
+const FACES = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+function rollDice() {
+  const d1 = Math.ceil(Math.random() * 6);
+  const d2 = Math.ceil(Math.random() * 6);
+  const e1 = document.getElementById('die1');
+  const e2 = document.getElementById('die2');
+  e1.classList.add('rolling'); e2.classList.add('rolling');
+  setTimeout(() => {
+    e1.textContent = FACES[d1-1];
+    e2.textContent = FACES[d2-1];
+    e1.classList.remove('rolling'); e2.classList.remove('rolling');
+    document.getElementById('dice-sum').textContent = d1 + d2;
+  }, 500);
+}
+
+/* ═══════════════════════════════════════════
+   SEARCH
+═══════════════════════════════════════════ */
+function onSearch() {
+  const q = document.getElementById('city-search').value.toLowerCase().trim();
+  const res = document.getElementById('search-results');
+  const matches = CITIES.filter(c =>
+    c.type !== 'chance' && c.type !== 'tax' && c.name.toLowerCase().includes(q)
+  );
+  if (!q || !matches.length) { res.innerHTML=''; res.classList.remove('open'); return; }
+  res.innerHTML = matches.map(c => `
+    <div class="sr-item" onmousedown="scrollToCard('${c.id}')">
+      ${c.name} <span>${c.price ? fmt(c.price) : ''}</span>
+    </div>
+  `).join('');
+  res.classList.add('open');
+}
+
+function hideSearch() {
+  setTimeout(() => {
+    document.getElementById('search-results').classList.remove('open');
+  }, 200);
+}
+
+/* ═══════════════════════════════════════════
+   CITY CARD RENDER
+═══════════════════════════════════════════ */
+function renderAllCards() {
+  renderPlayerCities('p1');
+  renderPlayerCities('p2');
+}
+
+function cityCardHTML(city) {
+  const cs = cityState[city.id];
+  const p1name = playerNames.p1;
+  const p2name = playerNames.p2;
+
+  const ownerBadge = cs.owner === 'unowned'
+    ? '<span class="badge badge-unowned">Unowned</span>'
+    : cs.owner === 'p1'
+      ? `<span class="badge badge-p1">${p1name}</span>`
+      : `<span class="badge badge-p2">${p2name}</span>`;
+
+  const isSpecial = city.type === 'special';
+  const isCity    = city.type === 'city';
+  const ownedClass = cs.owner === 'p1' ? 'owned-p1' : cs.owner === 'p2' ? 'owned-p2' : '';
+
+  let bodyContent = `
+    <div class="owner-row">
+      <label>Owned by</label>
+      <select class="owner-select" onchange="setOwner('${city.id}', this.value)">
+        <option value="unowned" ${cs.owner==='unowned'?'selected':''}>Unowned</option>
+        <option value="p1" ${cs.owner==='p1'?'selected':''}>${p1name}</option>
+        <option value="p2" ${cs.owner==='p2'?'selected':''}>${p2name}</option>
+      </select>
+    </div>
+  `;
+
+  if (isCity) {
+    bodyContent += `
+      <div class="build-row">
+        <div class="build-group">
+          <label>🏠 Houses</label>
+          <input class="build-input" type="number" min="0" max="4" value="${cs.houses}"
+            onchange="setBuild('${city.id}','houses',this.value)"/>
+        </div>
+        <div class="build-group">
+          <label>🏨 Hotel</label>
+          <input class="build-input" type="number" min="0" max="1" value="${cs.hotel}"
+            onchange="setBuild('${city.id}','hotel',this.value)"/>
+        </div>
+      </div>
+      <table class="rent-table">
+        <tr><th>Rate</th><th>Amount</th></tr>
+        <tr><td>Rent for visiting</td><td>${fmt(city.rentVisit)}</td></tr>
+        <tr><td>Rent (1 House)</td><td>${fmt(city.rent1h)}</td></tr>
+        <tr><td>Rent (1 Hotel)</td><td>${fmt(city.rent1hotel)}</td></tr>
+        <tr><td>House Cost</td><td>${fmt(city.houseCost)}</td></tr>
+        <tr><td>Hotel Cost</td><td>${fmt(city.hotelCost)}</td></tr>
+        <tr><td>Mortgage (House)</td><td>${fmt(city.mortgageHouse)}</td></tr>
+        <tr><td>Mortgage (Hotel)</td><td>${fmt(city.mortgageHotel)}</td></tr>
+        <tr><td>Mortgage (City)</td><td>${fmt(city.mortgageCity)}</td></tr>
+      </table>
+    `;
+  } else if (isSpecial) {
+    bodyContent += `
+      <table class="rent-table">
+        <tr><th>Rate</th><th>Amount</th></tr>
+        <tr><td>Rent for visiting</td><td>${fmt(city.rentVisit)}</td></tr>
+        <tr><td>Mortgage (City)</td><td>${fmt(city.mortgageCity)}</td></tr>
+      </table>
+    `;
+  }
+
+  return `
+    <div class="city-card ${ownedClass}" id="card-${city.id}">
+      <div class="city-top" onclick="toggleCard('${city.id}')">
+        <div>
+          <div class="city-name">${city.name} ${ownerBadge}</div>
+          ${city.type === 'special' ? '<div class="city-tag">No house/hotel</div>' : ''}
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${city.price ? `<div class="city-price">${fmt(city.price)}</div>` : ''}
+          <span class="city-toggle">▾</span>
+        </div>
+      </div>
+      <div class="city-body">
+        ${bodyContent}
+      </div>
+    </div>
+  `;
+}
+
+function toggleCard(id) {
+  const card = document.getElementById('card-' + id);
+  if (card) card.classList.toggle('open');
+}
+
+function setOwner(id, owner) {
+  cityState[id].owner = owner;
+  renderAllCards();
+}
+
+function setBuild(id, field, val) {
+  cityState[id][field] = parseInt(val) || 0;
+}
+
+function renderPlayerCities(player) {
+  const container = document.getElementById(player + '-cities');
+  const owned = CITIES.filter(c =>
+    cityState[c.id].owner === player && c.type !== 'chance' && c.type !== 'tax'
+  );
+  if (!owned.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:0.8rem;padding:8px 0;">No cities owned yet</div>';
+    return;
+  }
+  container.innerHTML = owned.map(c => cityCardHTML(c)).join('');
+}
+
+/* ═══════════════════════════════════════════
+   SEARCH → CARD NAVIGATION
+═══════════════════════════════════════════ */
+function scrollToCard(id) {
+  let card = document.querySelector(`.player-col #card-${id}`);
+  if (card) {
+    card.classList.add('open');
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.style.outline = '2px solid var(--accent2)';
+    setTimeout(() => card.style.outline = '', 1800);
+    return;
+  }
+  showCityModal(id);
+}
+
+/* ═══════════════════════════════════════════
+   CITY MODAL (for unowned cities from search)
+═══════════════════════════════════════════ */
+function showCityModal(id) {
+  const city = CITIES.find(c => c.id === id);
+  if (!city) return;
+
+  let existing = document.getElementById('city-modal');
+  if (existing) existing.remove();
+
+  const backdrop = document.createElement('div');
+  backdrop.id = 'city-modal';
+  backdrop.style.cssText = `
+    position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:500;
+    display:flex;align-items:center;justify-content:center;padding:20px;
+  `;
+  backdrop.onclick = (e) => { if(e.target===backdrop) backdrop.remove(); };
+
+  const inner = document.createElement('div');
+  inner.style.cssText = `
+    background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    max-width:420px;width:100%;max-height:80vh;overflow-y:auto;
+  `;
+  inner.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)">
+      <span style="font-weight:600;">${city.name}</span>
+      <span onclick="document.getElementById('city-modal').remove()" style="cursor:pointer;color:var(--muted);font-size:1.2rem">✕</span>
+    </div>
+    <div style="padding:14px 16px;">
+      ${cityCardHTML(city).replace(`id="card-${id}"`, 'id="modal-card-' + id + '"')}
+    </div>
+  `;
+  backdrop.appendChild(inner);
+  document.body.appendChild(backdrop);
+
+  setTimeout(() => {
+    const mc = document.getElementById('modal-card-' + id);
+    if (mc) mc.classList.add('open');
+  }, 50);
+}
+
+/* ═══════════════════════════════════════════
+   BOOT
+═══════════════════════════════════════════ */
+updateDisplay();
+</script>
 </body>
 </html>
