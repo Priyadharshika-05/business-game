@@ -1,109 +1,110 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Business India — 3D Board Game</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Cinzel+Decorative:wght@700&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Business India — 3D Board Game</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Tiro+Devanagari+Hindi&family=Cinzel+Decorative:wght@700&family=Rajdhani:wght@400;600;700&display=swap"
+        rel="stylesheet" />
+
+    <!-- Stylesheet -->
+    <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
-  <!-- ══════════════ SPLASH / SETUP SCREEN ══════════════ -->
-  <div id="splash-screen">
-    <div class="splash-bg"></div>
-    <div class="splash-content">
-      <h1 class="game-title">Business<br/><span>India</span></h1>
-      <p class="game-subtitle">The Great Indian Property Trading Game</p>
-      <div class="setup-panel">
-        <h2>Game Setup</h2>
-        <label>Number of Players</label>
-        <div class="btn-group" id="player-count-btns">
-          <button class="count-btn active" data-count="2">2</button>
-          <button class="count-btn" data-count="3">3</button>
-          <button class="count-btn" data-count="4">4</button>
+    <!-- ==================== SPLASH / SETUP SCREEN ==================== -->
+    <div id="splash-screen">
+        <div class="splash-bg"></div>
+        <div class="splash-content">
+            <h1 class="game-title">Business<br><span>India</span></h1>
+            <p class="game-subtitle">The Great Indian Property Trading Game</p>
+
+            <div class="setup-panel">
+                <h2>Game Setup</h2>
+                <label>Number of Players</label>
+                <div class="btn-group" id="player-count-btns">
+                    <button class="count-btn active" data-count="2">2</button>
+                    <button class="count-btn" data-count="3">3</button>
+                    <button class="count-btn" data-count="4">4</button>
+                </div>
+                <div id="player-setup-rows"></div>
+
+                <button id="start-game-btn" class="primary-btn">🎲 Start Game</button>
+            </div>
         </div>
-        <div id="player-setup-rows"></div>
-        <button id="start-game-btn" class="primary-btn">🎲 Start Game</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══════════════ GAME SCREEN ══════════════ -->
-  <div id="game-screen" class="hidden">
-
-    <!-- 3D Board Canvas -->
-    <div id="board-wrapper">
-      <canvas id="board-canvas"></canvas>
-      <div id="board-overlay">
-        <!-- Squares rendered here as HTML overlays -->
-      </div>
     </div>
 
-    <!-- HUD -->
-    <div id="hud">
-      <div id="hud-players"></div>
-      <div id="hud-bank">
-        <span>🏦 Bank</span>
-        <span id="bank-notes-display"></span>
-      </div>
-    </div>
-
-    <!-- Action Panel -->
-    <div id="action-panel">
-      <div id="current-player-info">
-        <div class="cp-token" id="cp-token"></div>
-        <div>
-          <div class="cp-name" id="cp-name">-</div>
-          <div class="cp-cash" id="cp-cash">₹0</div>
+    <!-- ==================== GAME SCREEN ==================== -->
+    <div id="game-screen" class="hidden">
+        <!-- 3D Board Canvas -->
+        <div id="board-wrapper">
+            <canvas id="board-canvas"></canvas>
+            <div id="board-overlay"></div>
         </div>
-      </div>
-      <div id="dice-area">
-        <div class="die" id="die1">🎲</div>
-        <div class="die" id="die2">🎲</div>
-        <div id="dice-sum"></div>
-      </div>
-      <div id="action-buttons">
-        <button id="roll-btn" class="primary-btn">Roll Dice</button>
-        <button id="buy-btn" class="action-btn hidden">Buy Property</button>
-        <button id="build-btn" class="action-btn hidden">Build</button>
-        <button id="end-turn-btn" class="action-btn hidden">End Turn</button>
-      </div>
-      <div id="message-log"></div>
+
+        <!-- HUD -->
+        <div id="hud">
+            <div id="hud-players"></div>
+            <div id="hud-bank">
+                <span>🏦 Bank</span>
+                <span id="bank-notes-display"></span>
+            </div>
+        </div>
+
+        <!-- Action Panel -->
+        <div id="action-panel">
+            <div id="current-player-info">
+                <div class="cp-token" id="cp-token"></div>
+                <div>
+                    <div class="cp-name" id="cp-name">-</div>
+                    <div class="cp-cash" id="cp-cash">₹0</div>
+                </div>
+            </div>
+
+            <div id="dice-area">
+                <div class="die" id="die1">🎲</div>
+                <div class="die" id="die2">🎲</div>
+                <div id="dice-sum"></div>
+            </div>
+
+            <div id="action-buttons">
+                <button id="roll-btn" class="primary-btn">Roll Dice</button>
+                <button id="buy-btn" class="action-btn hidden">Buy Property</button>
+                <button id="build-btn" class="action-btn hidden">Build</button>
+                <button id="end-turn-btn" class="action-btn hidden">End Turn</button>
+            </div>
+
+            <div id="message-log"></div>
+        </div>
+
+        <!-- Property Card Modal -->
+        <div id="property-modal" class="modal hidden">
+            <div class="modal-backdrop" id="modal-backdrop"></div>
+            <div class="modal-card" id="modal-card-content"></div>
+        </div>
+
+        <!-- Build Modal -->
+        <div id="build-modal" class="modal hidden">
+            <div class="modal-backdrop" id="build-backdrop"></div>
+            <div class="modal-inner" id="build-modal-inner"></div>
+        </div>
+
+        <!-- Game Over Modal -->
+        <div id="gameover-modal" class="modal hidden">
+            <div class="modal-backdrop"></div>
+            <div class="modal-inner gameover-inner">
+                <h2 id="gameover-title">Game Over!</h2>
+                <div id="gameover-body"></div>
+                <button class="primary-btn" onclick="location.reload()">Play Again</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Property Card Modal -->
-    <div id="property-modal" class="modal hidden">
-      <div class="modal-backdrop" id="modal-backdrop"></div>
-      <div class="modal-card" id="modal-card-content"></div>
-    </div>
-
-    <!-- Build Modal -->
-    <div id="build-modal" class="modal hidden">
-      <div class="modal-backdrop" id="build-backdrop"></div>
-      <div class="modal-inner" id="build-modal-inner"></div>
-    </div>
-
-    <!-- Game Over Modal -->
-    <div id="gameover-modal" class="modal hidden">
-      <div class="modal-backdrop"></div>
-      <div class="modal-inner gameover-inner">
-        <h2 id="gameover-title">Game Over!</h2>
-        <div id="gameover-body"></div>
-        <button class="primary-btn" onclick="location.reload()">Play Again</button>
-      </div>
-    </div>
-
-  </div>
-
-  <script src="js/data.js"></script>
-  <script src="js/bank.js"></script>
-  <script src="js/board.js"></script>
-  <script src="js/player.js"></script>
-  <script src="js/dice.js"></script>
-  <script src="js/game.js"></script>
-  <script src="js/ui.js"></script>
-  <script src="js/main.js"></script>
+    <!-- Main JavaScript -->
+    <script src="game.js"></script>
 </body>
 </html>
