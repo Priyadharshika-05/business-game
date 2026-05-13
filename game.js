@@ -738,10 +738,10 @@ const UI = {
                         <tr class="${p.bankrupt ? 'go-bankrupt' : ''}">
                             <td>${i + 1}</td>
                             <td><span class="go-token" style="background:${p.token.hex}"></span>${p.name}</td>
-                            <td>₹${p.cash.toLocaleString('en-IN')}</td>
+                            <td>&#8377;${p.cash.toLocaleString('en-IN')}</td>
                             <td>${p.properties.length}</td>
-                            <td>₹${p.netWorth.toLocaleString('en-IN')}</td>
-                        </tr>`).join('')
+                            <td>&#8377;${p.netWorth.toLocaleString('en-IN')}</td>
+                        </tr>`).join('')}
                 </tbody>
             </table>
         `;
