@@ -473,20 +473,15 @@ class Game {
 
     _playerPay(payer, amount, payee) {
         if (payer.cash < amount) {
-            if (payee) {
-                this.bank.receive(payer.cash, payer.notes);
-                this.bank.pay(payer.cash, payee.notes);
-            } else {
-                this.bank.receive(payer.cash, payer.notes);
-            }
+            // Player can't afford it — hand over whatever they have
+            const allCash = payer.cash;
+            this.bank.receive(allCash, payer.notes);
+            if (payee) this.bank.pay(allCash, payee.notes);
             return false;
         }
-        if (payee) {
-            this.bank.receive(amount, payer.notes);
-            this.bank.pay(amount, payee.notes);
-        } else {
-            this.bank.receive(amount, payer.notes);
-        }
+        // Direct transfer: payer pays to bank, bank pays to payee (or bank keeps it)
+        this.bank.receive(amount, payer.notes);
+        if (payee) this.bank.pay(amount, payee.notes);
         return true;
     }
 
@@ -588,6 +583,8 @@ const UI = {
                 ${p.bankrupt ? '<div class="bankrupt-badge">BANKRUPT</div>' : ''}
             </div>`)
             .join('');
+        const bankEl = document.getElementById('bank-notes-display');
+        if (bankEl) bankEl.textContent = '₹' + game.bank.totalCash.toLocaleString('en-IN');
     },
 
     updateActionPanel(game) {
@@ -602,7 +599,9 @@ const UI = {
         const endTurnBtn = document.getElementById('end-turn-btn');
 
         rollBtn.classList.toggle('hidden', game.phase !== 'roll');
-        endTurnBtn.classList.toggle('hidden', game.phase !== 'endturn');
+        endTurnBtn.classList.toggle('hidden', game.phase !== 'endturn' && game.phase !== 'buy');
+        if (game.phase === 'buy') endTurnBtn.textContent = 'Skip / End Turn';
+        else endTurnBtn.textContent = 'End Turn';
 
         const showBuy = game.phase === 'buy';
         buyBtn.classList.toggle('hidden', !showBuy);
@@ -750,24 +749,33 @@ const UI = {
 
     renderPlayerSetup(count) {
         const container = document.getElementById('player-setup-rows');
-        const used = new Set();
+        // Preserve existing name values before re-render
+        const prevNames = Array.from(container.querySelectorAll('.psr-name')).map(el => el.value);
+        const prevTokens = Array.from(container.querySelectorAll('.psr-token')).map(el => el.value);
         container.innerHTML = '';
 
+        const allTokenKeys = Object.keys(TOKEN_COLORS);
+        const chosenTokens = [];
+
         for (let i = 0; i < count; i++) {
+            // Pick a default token that hasn't been chosen yet
+            const defaultToken = prevTokens[i] && !chosenTokens.includes(prevTokens[i])
+                ? prevTokens[i]
+                : allTokenKeys.find(k => !chosenTokens.includes(k)) || allTokenKeys[i % allTokenKeys.length];
+            chosenTokens.push(defaultToken);
+
             const row = document.createElement('div');
             row.className = 'player-setup-row';
             const opts = Object.entries(TOKEN_COLORS)
-                .filter(([k]) => !used.has(k))
-                .map(([k, v]) => `<option value="${k}">${v.emoji} ${v.label}</option>`)
+                .map(([k, v]) => `<option value="${k}" ${k === defaultToken ? 'selected' : ''}>${v.emoji} ${v.label}</option>`)
                 .join('');
             row.innerHTML = `
                 <div class="psr-label">Player ${i + 1}</div>
-                <input type="text" class="psr-name" placeholder="Name" value="Player ${i + 1}" maxlength="16" />
+                <input type="text" class="psr-name" placeholder="Name" value="${prevNames[i] || 'Player ' + (i + 1)}" maxlength="16" />
                 <select class="psr-token">${opts}</select>`;
             container.appendChild(row);
-            const sel = row.querySelector('.psr-token');
-            used.add(sel.value);
-            sel.addEventListener('change', () => UI.renderPlayerSetup(count));
+
+            row.querySelector('.psr-token').addEventListener('change', () => UI.renderPlayerSetup(count));
         }
     },
 
@@ -898,7 +906,10 @@ function highlightSquare(idx) {
 
 function onSquareClick(idx) {
     const sq = BOARD_SQUARES[idx];
-    if (sq && sq.type === 'city') UI.showPropertyCard(sq);
+    if (sq && sq.type === 'city') {
+        const owner = window._game ? window._game.players.find(p => p.properties.includes(sq.id) && !p.bankrupt) : null;
+        UI.showPropertyCard(sq, owner ? owner.name : '');
+    }
 }
 
 /* ============================================================
@@ -941,6 +952,7 @@ function startGame(playerDefs) {
     renderBoard(_game);
     updateTokens(_game.players);
     updateBuildings(_game.players);
+    applyBoardPerspective();
 
     // Action button listeners
     document.getElementById('roll-btn').addEventListener('click', handleRoll);
